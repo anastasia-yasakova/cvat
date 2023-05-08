@@ -179,7 +179,9 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
-        path: ${{ github.workspace }}/coverage.xml
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ github.workspace }}/coverage1.xml
 
   unit_testing:
     needs: build
