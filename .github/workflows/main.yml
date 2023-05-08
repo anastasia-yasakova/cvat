@@ -346,6 +346,7 @@ jobs:
           name: cypress_screenshots_${{ matrix.specs }}
           path: ${{ github.workspace }}/tests/cypress/screenshots
 
+
   generate_github_pages:
     needs: [rest_api_testing, unit_testing, e2e_testing]
     runs-on: ubuntu-latest
