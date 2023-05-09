@@ -184,7 +184,7 @@ jobs:
 
   publish_dev_images:
     if: github.ref == 'refs/heads/develop'
-    needs: [rest_api_testing, unit_testing, e2e_testing, generate_github_pages]
+    needs: [rest_api_testing]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
