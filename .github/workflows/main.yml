@@ -159,10 +159,8 @@ jobs:
           pip3 install --user -r tests/python/requirements.txt
           pytest tests/python/ --cov --cov-report xml
 
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage reports to Codecov with GitHub Action
         uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
 
 
       - name: Creating a log file from cvat containers
