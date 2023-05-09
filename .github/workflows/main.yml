@@ -164,6 +164,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+
       - name: Creating a log file from cvat containers
         if: failure() && steps.run_tests.conclusion == 'failure'
         env:
