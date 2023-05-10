@@ -108,6 +108,7 @@ jobs:
           name: cvat_sdk
           path: /tmp/cvat_sdk/
 
+
   rest_api_testing:
     needs: build
     runs-on: ubuntu-latest
