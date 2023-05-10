@@ -227,7 +227,7 @@ jobs:
           -c 'coverage run -a manage.py test cvat/apps && coverage json && mv coverage.json ${CONTAINER_COVERAGE_DATA_DIR}'
 
           docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ci.yml run cvat_ci /bin/bash \
-          -c 'yarn --frozen-lockfile --ignore-scripts && yarn workspace cvat-core run test'
+          -c 'yarn --frozen-lockfile --ignore-scripts && yarn workspace cvat-core run test && mv cvat-core/reports/coverage-final.json ${CONTAINER_COVERAGE_DATA_DIR}'
 
       # - name: Uploading code coverage results as an artifact
       #   uses: actions/upload-artifact@v2
