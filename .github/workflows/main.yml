@@ -229,7 +229,7 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ci.yml run cvat_ci /bin/bash \
           -c 'yarn --frozen-lockfile --ignore-scripts && yarn workspace cvat-core run test'
 
-
+          mkdir -p ./.nyc_output
           npx nyc report --reporter=text-lcov >> ${HOST_COVERAGE_DATA_DIR}/lcov.info
 
           docker compose \
