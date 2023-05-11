@@ -160,7 +160,6 @@ jobs:
           pip3 install -r tests/python/requirements.txt
           coverage run -m pytest tests/python/
           coverage xml
-          pip list
 
       - name: Upload coverage reports to Codecov with GitHub Action
         uses: codecov/codecov-action@v3
