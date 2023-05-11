@@ -36,4 +36,3 @@ exclude_lines =
 # don't fail on the code that can be found
 ignore_errors = true
 
-skip_empty = true
