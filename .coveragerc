@@ -17,6 +17,7 @@ omit =
 
 [report]
 # Regexes for lines to exclude from consideration
+
 exclude_lines =
     # Have to re-enable the standard pragma
     pragma: no cover
@@ -36,4 +37,3 @@ exclude_lines =
 # don't fail on the code that can be found
 ignore_errors = true
 
-skip_empty = true
