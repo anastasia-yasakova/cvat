@@ -117,7 +117,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.10'
 
       - name: Download CVAT server image
         uses: actions/download-artifact@v3
@@ -155,12 +155,12 @@ jobs:
       - name: Running REST API and SDK tests
         id: run_tests
         run: |
-          pip3 install --user '/tmp/cvat_sdk/[pytorch]'
-          pip3 install --user cvat-cli/
-          pip3 install --user -r tests/python/requirements.txt
+          pip3 install '/tmp/cvat_sdk/[pytorch]'
+          pip3 install cvat-cli/
+          pip3 install -r tests/python/requirements.txt
           coverage run -m pytest tests/python/
           coverage xml
-          coverage --version
+          pip list
 
       - name: Upload coverage reports to Codecov with GitHub Action
         uses: codecov/codecov-action@v3
