@@ -57,10 +57,10 @@ jobs:
           tags: cvat/server
           outputs: type=docker,dest=/tmp/cvat_server/image.tar
 
-      - name: Instrumentation of the code then rebuilding the CVAT UI
-        run: |
-          yarn --frozen-lockfile
-          yarn run coverage
+      # - name: Instrumentation of the code then rebuilding the CVAT UI
+      #   run: |
+      #     yarn --frozen-lockfile
+      #     yarn run coverage
 
       - name: CVAT UI. Build and push
         uses: docker/build-push-action@v3
