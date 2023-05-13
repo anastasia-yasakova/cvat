@@ -47,6 +47,7 @@ jobs:
         run: |
           mkdir /tmp/cvat_server
           mkdir /tmp/cvat_ui
+          mkdir /tmp/cvat_sdk
 
       - name: CVAT server. Build and push
         uses: docker/build-push-action@v3
@@ -57,11 +58,6 @@ jobs:
           tags: cvat/server
           outputs: type=docker,dest=/tmp/cvat_server/image.tar
 
-      # - name: Instrumentation of the code then rebuilding the CVAT UI
-      #   run: |
-      #     yarn --frozen-lockfile
-      #     yarn run coverage
-
       - name: CVAT UI. Build and push
         uses: docker/build-push-action@v3
         with:
@@ -70,6 +66,13 @@ jobs:
           file: Dockerfile.ui
           tags: cvat/ui
           outputs: type=docker,dest=/tmp/cvat_ui/image.tar
+
+      - name: CVAT SDK. Build
+        run: |
+          pip3 install --user -r cvat-sdk/gen/requirements.txt
+          ./cvat-sdk/gen/generate.sh
+
+          cp -r cvat-sdk/* /tmp/cvat_sdk/
 
       - name: Verify API schema
         id: verify_schema
@@ -99,6 +102,12 @@ jobs:
           name: cvat_ui
           path: /tmp/cvat_ui/image.tar
 
+      - name: Upload CVAT SDK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cvat_sdk
+          path: /tmp/cvat_sdk/
+
   rest_api_testing:
     needs: build
     runs-on: ubuntu-latest
@@ -121,6 +130,12 @@ jobs:
           name: cvat_ui
           path: /tmp/cvat_ui/
 
+      - name: Download CVAT SDK package
+        uses: actions/download-artifact@v3
+        with:
+          name: cvat_sdk
+          path: /tmp/cvat_sdk/
+
       - name: Load Docker images
         run: |
           docker load --input /tmp/cvat_server/image.tar
@@ -128,6 +143,7 @@ jobs:
           docker tag cvat/server:latest cvat/server:${CVAT_VERSION}
           docker tag cvat/ui:latest cvat/ui:${CVAT_VERSION}
           docker image ls -a
+
 
       - name: Upload expected schema as an artifact
         if: failure() && steps.verify_schema.conclusion == 'failure'
@@ -139,15 +155,10 @@ jobs:
       - name: Running REST API and SDK tests
         id: run_tests
         run: |
-          pip install -r cvat-sdk/gen/requirements.txt
-          ./cvat-sdk/gen/generate.sh
-          pip install -r ./tests/python/requirements.txt
-          pip install -e ./cvat-sdk
-          pip install -e ./cvat-cli
-          pytest tests/python/ --cov --cov-report xml
-
-      - name: Upload coverage reports to Codecov with GitHub Action
-        uses: codecov/codecov-action@v3
+          pip3 install --user '/tmp/cvat_sdk/[pytorch]'
+          pip3 install --user cvat-cli/
+          pip3 install --user -r tests/python/requirements.txt
+          pytest tests/python/ -s -v
 
       - name: Creating a log file from cvat containers
         if: failure() && steps.run_tests.conclusion == 'failure'
@@ -205,13 +216,10 @@ jobs:
           while [[  $(curl -s -o /dev/null -w "%{http_code}" localhost:8181/health?bundles) != "200" && max_tries -gt 0 ]]; do (( max_tries-- )); sleep 5; done
 
           docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ci.yml run cvat_ci /bin/bash \
-          -c 'coverage run -a manage.py test cvat/apps && coverage json && mv coverage.json ${CONTAINER_COVERAGE_DATA_DIR}'
+            -c 'python manage.py test cvat/apps -v 2'
 
           docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ci.yml run cvat_ci /bin/bash \
-          -c 'yarn --frozen-lockfile --ignore-scripts && yarn workspace cvat-core run test && mv cvat-core/reports/coverage/coverage-final.json ${CONTAINER_COVERAGE_DATA_DIR}'
-
-      - name: Upload coverage reports to Codecov with GitHub Action
-        uses: codecov/codecov-action@v3
+            -c 'yarn --frozen-lockfile --ignore-scripts && yarn workspace cvat-core run test'
 
       - name: Creating a log file from cvat containers
         if: failure()
@@ -305,18 +313,15 @@ jobs:
             npx cypress run \
               --headed \
               --browser chrome \
+              --env coverage=false \
               --config-file cypress_canvas3d.config.js \
               --spec 'cypress/e2e/${{ matrix.specs }}/**/*.js,cypress/e2e/remove_users_tasks_projects_organizations.js'
-            mv ./.nyc_output/out.json ./.nyc_output/out_${{ matrix.specs }}.json
           else
             npx cypress run \
               --browser chrome \
+              --env coverage=false \
               --spec 'cypress/e2e/${{ matrix.specs }}/**/*.js,cypress/e2e/remove_users_tasks_projects_organizations.js'
-            mv ./.nyc_output/out.json ./.nyc_output/out_${{ matrix.specs }}.json
           fi
-
-      - name: Upload coverage reports to Codecov with GitHub Action
-        uses: codecov/codecov-action@v3
 
       - name: Creating a log file from "cvat" container logs
         if: failure()
@@ -338,3 +343,101 @@ jobs:
         with:
           name: cypress_screenshots_${{ matrix.specs }}
           path: ${{ github.workspace }}/tests/cypress/screenshots
+
+  generate_github_pages:
+    needs: [rest_api_testing, unit_testing, e2e_testing]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Download CVAT server images
+        uses: actions/download-artifact@v3
+        with:
+          name: cvat_server
+          path: /tmp/cvat_server/
+
+      - name: Download CVAT server images
+        uses: actions/download-artifact@v3
+        with:
+          name: cvat_sdk
+          path: /tmp/cvat_sdk/
+
+      - name: Load Docker images
+        run: |
+          docker load --input /tmp/cvat_server/image.tar
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.83.1'
+          extended: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - name: Install npm packages
+        working-directory: ./site
+        run: |
+          npm ci
+
+      - name: Build docs
+        run: |
+          pip install -r site/requirements.txt
+          python site/process_sdk_docs.py --input-dir /tmp/cvat_sdk/docs/ --site-root site/
+          python site/build_docs.py
+        env:
+          HUGO_ENV: production
+
+      - name: Deploy
+        if: github.ref == 'refs/heads/develop'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          force_orphan: true
+
+  publish_dev_images:
+    if: github.ref == 'refs/heads/develop'
+    needs: [rest_api_testing, unit_testing, e2e_testing, generate_github_pages]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download CVAT server images
+        uses: actions/download-artifact@v3
+        with:
+          name: cvat_server
+          path: /tmp/cvat_server/
+
+      - name: Download CVAT UI images
+        uses: actions/download-artifact@v3
+        with:
+          name: cvat_ui
+          path: /tmp/cvat_ui/
+
+      - name: Load Docker images
+        run: |
+          docker load --input /tmp/cvat_server/image.tar
+          docker load --input /tmp/cvat_ui/image.tar
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push to Docker Hub
+        env:
+          SERVER_IMAGE_REPO: ${{ secrets.DOCKERHUB_WORKSPACE }}/server
+          UI_IMAGE_REPO: ${{ secrets.DOCKERHUB_WORKSPACE }}/ui
+        run: |
+          docker tag cvat/server:latest "${SERVER_IMAGE_REPO}:dev"
+          docker push "${SERVER_IMAGE_REPO}:dev"
+
+          docker tag cvat/ui:latest "${UI_IMAGE_REPO}:dev"
+          docker push "${UI_IMAGE_REPO}:dev"
