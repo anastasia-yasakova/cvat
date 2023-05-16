@@ -1034,6 +1034,7 @@ class TaskAnnotationsImportTest(_DbTestBase):
 
                 self._test_can_import_annotations(task, format_name)
 
+
     def test_can_import_mots_annotations_with_splited_masks(self):
         #https://github.com/openvinotoolkit/cvat/issues/3360
 
