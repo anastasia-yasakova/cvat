@@ -310,6 +310,7 @@ jobs:
           DJANGO_SU_NAME: 'admin'
           DJANGO_SU_EMAIL: 'admin@localhost.company'
           DJANGO_SU_PASSWORD: '12qwaszx'
+          HOST_COVERAGE_DATA_DIR: ${{ github.workspace }}
         run: |
           yarn --frozen-lockfile
           yarn run coverage
@@ -323,10 +324,12 @@ jobs:
               --browser chrome \
               --config-file cypress_canvas3d.config.js \
               --spec 'cypress/e2e/${{ matrix.specs }}/**/*.js,cypress/e2e/remove_users_tasks_projects_organizations.js'
+            mv "${{ github.workspace }}/cvat-ui/reports/coverage/coverage-final.json" ${{ github.workspace }}
           else
             npx cypress run \
               --browser chrome \
               --spec 'cypress/e2e/${{ matrix.specs }}/**/*.js,cypress/e2e/remove_users_tasks_projects_organizations.js'
+            mv "${{ github.workspace }}/cvat-ui/reports/coverage/coverage-final.json" ${{ github.workspace }}
           fi
 
       - name: Upload coverage reports to Codecov with GitHub Action
