@@ -323,12 +323,10 @@ jobs:
               --browser chrome \
               --config-file cypress_canvas3d.config.js \
               --spec 'cypress/e2e/${{ matrix.specs }}/**/*.js,cypress/e2e/remove_users_tasks_projects_organizations.js'
-            mv ./.nyc_output/out.json ./.nyc_output/out_${{ matrix.specs }}.json
           else
             npx cypress run \
               --browser chrome \
               --spec 'cypress/e2e/${{ matrix.specs }}/**/*.js,cypress/e2e/remove_users_tasks_projects_organizations.js'
-            mv ./.nyc_output/out.json ./.nyc_output/out_${{ matrix.specs }}.json
           fi
 
       - name: Upload coverage reports to Codecov with GitHub Action
