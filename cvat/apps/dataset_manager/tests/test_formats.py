@@ -734,6 +734,30 @@ class TaskAnnotationsImportTest(_DbTestBase):
                 {"name": "person"}
             ]
 
+        if annotation_format == "CVAT 1.1":
+            labels += [{
+                "name": "s1",
+                "attributes": [],
+                "type": "skeleton",
+                "sublabels": [
+                    {
+                        "name": "1",
+                        "attributes": [],
+                        "type": "points",
+                    },
+                    {
+                        "name": "2",
+                        "attributes": [],
+                        "type": "points",
+                    },
+                    {
+                        "name": "3",
+                        "attributes": [],
+                        "type": "points",
+                    }
+                ]
+            }]
+
         task = {
             "name": "my task #1",
             "overlap": 0,
@@ -894,6 +918,69 @@ class TaskAnnotationsImportTest(_DbTestBase):
                 shapes = [rectangle_shape_wo_attrs,
                     rectangle_shape_with_attrs]
                 tags = [tag_with_attrs, tag_wo_attrs]
+                shapes += [{
+                    "label_id": task["labels"][3]["id"],
+                    "type": "skeleton",
+                    "frame": 0,
+                    "group": 0,
+                    "source": "manual",
+                    "occluded": False,
+                    "outside": False,
+                    "z_order": 0,
+                    "rotation": 0,
+                    "points": [],
+                    "attributes": [],
+                    "elements": [
+                        {
+                            "label_id": task["labels"][3]["sublabels"][0]["id"],
+                            "type": "points",
+                            "frame": 0,
+                            "group": 0,
+                            "source": "manual",
+                            "occluded": False,
+                            "outside": False,
+                            "z_order": 0,
+                            "rotation": 0,
+                            "points": [
+                                185.5,
+                                138.4
+                            ],
+                            "attributes": []
+                        },
+                        {
+                            "label_id": task["labels"][3]["sublabels"][1]["id"],
+                            "type": "points",
+                            "frame": 0,
+                            "group": 0,
+                            "source": "manual",
+                            "occluded": False,
+                            "outside": False,
+                            "z_order": 0,
+                            "rotation": 0,
+                            "points": [
+                                459.1,
+                                179.4
+                            ],
+                            "attributes": []
+                        },
+                        {
+                            "label_id": task["labels"][3]["sublabels"][2]["id"],
+                            "type": "points",
+                            "frame": 0,
+                            "group": 0,
+                            "source": "manual",
+                            "occluded": False,
+                            "outside": False,
+                            "z_order": 0,
+                            "rotation": 0,
+                            "points": [
+                                371.3,
+                                384.2
+                            ],
+                            "attributes": []
+                        }
+                    ]
+                }]
             elif annotation_format == "MOTS PNG 1.0":
                 tracks = [track_wo_attrs]
             else:
