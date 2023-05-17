@@ -213,6 +213,7 @@ jobs:
           HOST_COVERAGE_DATA_DIR: ${{ github.workspace }}
           CONTAINER_COVERAGE_DATA_DIR: "/coverage_data"
         run: |
+          pip install -r cvat/requirements/testing.txt
           docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d cvat_opa cvat_server cvat_db
 
           max_tries=12
